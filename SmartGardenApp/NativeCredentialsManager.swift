@@ -26,10 +26,11 @@ class NativeCredentialsManager: NSObject, WKScriptMessageHandler {
         switch action {
         case "getLastLoggedInUsername":
             if let callbackId = body["callbackId"] as? String {
-                        let username = UserDefaults.standard.string(forKey: "lastLoggedInUsername") ?? "null"
-                        evaluateJS("window.NativeCredentialsManager._resolveResult('\(escapeJS(callbackId))', '\(escapeJS(username))')")
-                        print(username)
-                    }
+                    // 修改点：将 "null" 改为 ""
+                    let username = UserDefaults.standard.string(forKey: "lastLoggedInUsername") ?? ""
+                    evaluateJS("window.NativeCredentialsManager._resolveResult('\(escapeJS(callbackId))', '\(escapeJS(username))')")
+                    print("Username fetched: \(username)")
+                }
         case "saveLastLoggedInUsername":
             if let username = body["username"] as? String {
                 UserDefaults.standard.set(username, forKey: "lastLoggedInUsername")
@@ -43,12 +44,13 @@ class NativeCredentialsManager: NSObject, WKScriptMessageHandler {
 
         case "getEncryptedPassword":
             if let callbackId = body["callbackId"] as? String {
-                if let username = body["username"] as? String {
-                    let encrypted = UserDefaults.standard.string(forKey: "credentials_\(username)") ?? "null"
-                    evaluateJS("window.NativeCredentialsManager._resolveResult('\(escapeJS(callbackId))', '\(escapeJS(encrypted))')")
-                    print(encrypted)
+                    if let username = body["username"] as? String {
+                        // 修改点：将 "null" 改为 ""
+                        let encrypted = UserDefaults.standard.string(forKey: "credentials_\(username)") ?? ""
+                        evaluateJS("window.NativeCredentialsManager._resolveResult('\(escapeJS(callbackId))', '\(escapeJS(encrypted))')")
+                        print("Password fetched: \(encrypted)")
+                    }
                 }
-            }
 
         case "decryptPassword":
             if let encrypted = body["encryptedPasswordBase64"] as? String {
@@ -68,9 +70,19 @@ class NativeCredentialsManager: NSObject, WKScriptMessageHandler {
 
     private func evaluateJS(_ js: String) {
         DispatchQueue.main.async {
-            self.webView?.evaluateJavaScript(js, completionHandler: nil)
+            guard let webView = self.webView else {
+                print("NativeCredentialsManager: webView is nil, JS skipped")
+                return
+            }
+
+            webView.evaluateJavaScript(js) { _, error in
+                if let error = error {
+                    print("JS evaluation error:", error.localizedDescription)
+                }
+            }
         }
     }
+
 
     private func fakeDecrypt(_ input: String) -> String {
         return "[Decrypted]" + input

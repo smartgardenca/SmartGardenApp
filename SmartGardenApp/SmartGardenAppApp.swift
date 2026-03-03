@@ -5,7 +5,9 @@ import SwiftUI
 struct SmartGardenAppApp: App {
     var body: some Scene {
         WindowGroup {
-            WebView(url: URL(string: "https://app.smart-garden.ca")!)
+//            WebView(url: URL(string: "https://app.smart-garden.ca")!)
+            ContentView()
+            
         }
     }
 }

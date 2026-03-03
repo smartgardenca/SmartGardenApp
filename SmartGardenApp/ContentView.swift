@@ -10,11 +10,17 @@ struct ContentView: View {
     @State private var showCamera = false
     @State private var base64Image: String? = nil
 
+    @State private var hasStarted = false
+    
     var body: some View {
         ZStack {
-            WebView(url: URL(string: "https://app.smart-garden.ca")!)
-                .edgesIgnoringSafeArea(.all)
-
+            if hasStarted {
+                WebView(url: URL(string: "https://app.smart-garden.ca")!)
+                    .ignoresSafeArea()
+            }else {
+                WelcomeView(isStarted: $hasStarted)
+                    .transition(.asymmetric(insertion: .identity, removal: .opacity))
+            }
             if showCamera {
                 CameraManager { base64 in
                     self.base64Image = base64
